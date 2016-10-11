@@ -79,7 +79,6 @@ def ReadDataPack(input_file):
 
   return DataPackContents(resources, encoding)
 
-
 def WriteDataPackToString(resources, encoding):
   """Write a map of id=>data into a string in the data pack format and return
   it."""
@@ -107,7 +106,6 @@ def WriteDataPackToString(resources, encoding):
     ret.append(resources[id])
   return ''.join(ret)
 
-
 def WriteDataPack(resources, output_file, encoding):
   """Write a map of id=>data into output_file as a data pack."""
   content = WriteDataPackToString(resources, encoding)
@@ -116,26 +114,55 @@ def WriteDataPack(resources, output_file, encoding):
 
 def PackDirectoryIntoFile(directory, pakFile):
   print "Packing %s as %s" % (directory, pakFile)
-  
-  if not os.path.isdir(directory):
+
+  # if it's a gettext file we signal it
+  if os.path.isfile(directory) and re.search("\.po(t)?$", directory):
+    pot = True
+  elif not os.path.isdir(directory):
     print "%s is not a directory (or does not exist)" % (directory)
     return False
-  
-  files = os.listdir(directory)
-  files.sort()
-  
-  numeric = re.compile("^\d+$")
-  
-  data = {}
-  for (id) in files:
-    if not numeric.match(id):
-      continue
-    input_file = "%s/%s" % (directory, id)
-    with open(input_file, "rb") as file:
-      data[int(id)] = file.read()
+
+  if not pot:
+    files = os.listdir(directory)
+    files.sort()
+
+    numeric = re.compile("^\d+$")
+
+    data = {}
+    for (id) in files:
+      if not numeric.match(id):
+        continue
+      input_file = "%s/%s" % (directory, id)
+      with open(input_file, "rb") as file:
+        data[int(id)] = file.read()
+  else:
+    # regular expressions to use
+    msgctxt = re.compile("msgctxt \"(\d+)\"")
+    msgstrg = re.compile("msgstr \"(.*)\"")
+    msgstrp = re.compile("\"(.*)\"")
+    id = False
+    strp = False
+
+    # iterate over the lines of te po file
+    data = {}
+    file = open(directory, "r")
+    for line in file.readlines():
+      ctxt = msgctxt.match(line)
+      text = msgstrg.match(line)
+      rest = msgstrp.match(line)
+      if ctxt:
+        if id:
+          data[int(id)] = strp.replace("\\\"", "\"")
+        id = ctxt.group(1)
+        strp = False
+      if text and id:
+        strp = text.expand(text.group(1))
+      if rest and strp:
+        strp += rest.expand(rest.group(1))
+    data[int(id)] = strp
 
   WriteDataPack(data, pakFile, UTF8)
-  
+
   return True
 
 def UnpackFileIntoDirectory(pakFile, directory):
@@ -166,7 +193,7 @@ def main():
   if len(sys.argv) <= 1:
     print "Usage: %s <file_or_directory>" % sys.argv[0]
     return
-  
+
   path = sys.argv[1]
   if os.path.isdir(path):
     PackDirectoryIntoFile(path, path + ".pak")
