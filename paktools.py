@@ -181,7 +181,7 @@ def UnpackFileIntoDirectory(pakFile, directory):
   name = re.search("^([a-zA-Z-]+).*\.po$", directory)
   if name:
     with open(directory, "w") as file:
-      file.write("msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: Vivaldi Chromium Strings\\n\"\n\"Language-Team: Vivaldi Translation Team\\n\"\n\"Last-Translator: Vivaldi Translation Team\\n\"\n\"Report-Msgid-Bugs-To: https://github.com/An-dz/patch_devtools/issues\\n\"\n\"POT-Creation-Date: " +
+      file.write("msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: Vivaldi Chromium Strings\\n\"\n\"Language-Team: Vivaldi Translation Team\\n\"\n\"Last-Translator: Vivaldi Translation Team\\n\"\n\"Report-Msgid-Bugs-To: https://github.com/An-dz/ChromiumPoPak/issues\\n\"\n\"POT-Creation-Date: " +
         time.strftime("%Y-%m-%d %H:%M+0000", time.gmtime(os.path.getmtime(pakFile))) +
         "\\n\"\n\"PO-Revision-Date: " +
         time.strftime("%Y-%m-%d %H:%M+0000", time.gmtime()) +
