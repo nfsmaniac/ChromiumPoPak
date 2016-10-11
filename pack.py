@@ -11,7 +11,7 @@ def main():
     return
   
   directory = sys.argv[1]
-  file      = sys.argv[2] if len(sys.argv) >= 3 else "%s.pak" % (directory)
+  file      = sys.argv[2] if len(sys.argv) >= 3 else "%s.pak" % (directory.replace(".po", ""))
   
   paktools.PackDirectoryIntoFile(directory, file)
 
