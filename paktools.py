@@ -152,14 +152,16 @@ def PackDirectoryIntoFile(directory, pakFile):
       rest = msgstrp.match(line)
       if ctxt:
         if id:
-          data[int(id)] = strp.replace("\\\"", "\"")
+          strp = strp.replace("\\\"", "\"")
+          data[int(id)] = strp.replace("\\n", "\n")
         id = ctxt.group(1)
         strp = False
       if text and id:
         strp = text.expand(text.group(1))
       if rest and strp:
         strp += rest.expand(rest.group(1))
-    data[int(id)] = strp
+    strp = strp.replace("\\\"", "\"")
+    data[int(id)] = strp.replace("\\n", "\n")
 
   WriteDataPack(data, pakFile, UTF8)
 
