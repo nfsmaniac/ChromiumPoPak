@@ -38,6 +38,7 @@ import struct
 import sys
 import re
 import shutil
+import time
 
 PACK_FILE_VERSION = 4
 HEADER_LENGTH = 2 * 4 + 1  # Two uint32s. (file version, number of entries) and
@@ -174,16 +175,32 @@ def UnpackFileIntoDirectory(pakFile, directory):
     print "%s is not a file (or does not exist)" % (pakFile)
     return False
 
-  if os.path.exists(directory):
-    shutil.rmtree(directory)
-  os.makedirs(directory)
-
   data = ReadDataPack(pakFile)
   #print data.encoding
-  for (resource_id, contents) in data.resources.iteritems():
-    output_file = "%s/%s" % (directory, resource_id)
-    with open(output_file, "wb") as file:
-      file.write(contents)
+
+  name = re.search("^([a-zA-Z-]+).*\.po$", directory)
+  if name:
+    with open(directory, "w") as file:
+      file.write("msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: Vivaldi Chromium Strings\\n\"\n\"Language-Team: Vivaldi Translation Team\\n\"\n\"Last-Translator: Vivaldi Translation Team\\n\"\n\"Report-Msgid-Bugs-To: https://github.com/An-dz/patch_devtools/issues\\n\"\n\"POT-Creation-Date: " +
+        time.strftime("%Y-%m-%d %H:%M+0000", time.gmtime(os.path.getmtime(pakFile))) +
+        "\\n\"\n\"PO-Revision-Date: " +
+        time.strftime("%Y-%m-%d %H:%M+0000", time.gmtime()) +
+        "\\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=UTF-8\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\"Language: " +
+        name.group(1).replace("-", "_") +
+        "\\n\"\n\"X-Generator: Vivaldi Translation Team Packer 1.0\\n\"\n\n")
+      for (resource_id, contents) in data.resources.iteritems():
+        contents = contents.replace("\"", "\\\"")
+        contents = contents.replace("\n", "\\n\"\n\"")
+        file.write("msgctxt \"" + str(resource_id) + "\"\nmsgid \"" + contents + "\"\nmsgstr \"" + contents + "\"\n\n")
+  else:
+    if os.path.exists(directory):
+      shutil.rmtree(directory)
+    os.makedirs(directory)
+
+    for (resource_id, contents) in data.resources.iteritems():
+      output_file = "%s/%s" % (directory, resource_id)
+      with open(output_file, "wb") as file:
+        file.write(contents)
 
 def FindIdForNameInHeaderFile(name, headerFile):
   print "Extracting ID for %s from header file %s" % (name, headerFile)
