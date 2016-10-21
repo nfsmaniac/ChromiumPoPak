@@ -178,7 +178,7 @@ def UnpackFileIntoDirectory(pakFile, directory):
   data = ReadDataPack(pakFile)
   #print data.encoding
 
-  name = re.search("^([a-zA-Z-]+).*\.po$", directory)
+  name = re.search("^([a-zA-Z-]+).*\.po(t)?$", directory)
   if name:
     with open(directory, "w") as file:
       file.write("msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: Vivaldi Chromium Strings\\n\"\n\"Language-Team: Vivaldi Translation Team\\n\"\n\"Last-Translator: Vivaldi Translation Team\\n\"\n\"Report-Msgid-Bugs-To: https://github.com/An-dz/ChromiumPoPak/issues\\n\"\n\"POT-Creation-Date: " +
@@ -191,7 +191,10 @@ def UnpackFileIntoDirectory(pakFile, directory):
       for (resource_id, contents) in data.resources.iteritems():
         contents = contents.replace("\"", "\\\"")
         contents = contents.replace("\n", "\\n\"\n\"")
-        file.write("msgctxt \"" + str(resource_id) + "\"\nmsgid \"" + contents + "\"\nmsgstr \"" + contents + "\"\n\n")
+        file.write("msgctxt \"" + str(resource_id) + "\"\nmsgid \"" + contents + "\"\n")
+        if not name.group(2):
+          file.write("msgstr \"" + contents + "\"\n")
+        file.write("\n")
   else:
     if os.path.exists(directory):
       shutil.rmtree(directory)
