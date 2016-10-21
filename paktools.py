@@ -192,9 +192,10 @@ def UnpackFileIntoDirectory(pakFile, directory):
         contents = contents.replace("\"", "\\\"")
         contents = contents.replace("\n", "\\n\"\n\"")
         file.write("msgctxt \"" + str(resource_id) + "\"\nmsgid \"" + contents + "\"\n")
+        file.write("msgstr \"")
         if not name.group(2):
-          file.write("msgstr \"" + contents + "\"\n")
-        file.write("\n")
+          file.write(contents)
+        file.write("\"\n\n")
   else:
     if os.path.exists(directory):
       shutil.rmtree(directory)
