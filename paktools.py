@@ -28,22 +28,23 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
+PYTHONIOENCODING="UTF-8"
 
 '''Provides functions to handle .pak files as provided by Chromium. If the optional argument is a file, it will be unpacked, if it is a directory, it will be packed.'''
 
 import collections
-import exceptions
 import os
 import struct
 import sys
 import re
 import shutil
 import time
+import polib
 
 PACK_FILE_VERSION = 4
 HEADER_LENGTH = 2 * 4 + 1  # Two uint32s. (file version, number of entries) and
                            # one uint8 (encoding of text resources)
-BINARY, UTF8, UTF16 = range(3)
+BINARY, UTF8, UTF16 = list(range(3))
 
 
 class WrongFileVersion(Exception):
@@ -62,7 +63,7 @@ def ReadDataPack(input_file):
   # Read the header.
   version, num_entries, encoding = struct.unpack("<IIB", data[:HEADER_LENGTH])
   if version != PACK_FILE_VERSION:
-    print "Wrong file version in ", input_file
+    print("Wrong file version in ", input_file)
     raise WrongFileVersion
 
   resources = {}
@@ -114,13 +115,13 @@ def WriteDataPack(resources, output_file, encoding):
     file.write(content)
 
 def PackDirectoryIntoFile(directory, pakFile):
-  print "Packing %s as %s" % (directory, pakFile)
+  print("Packing %s as %s" % (directory, pakFile))
 
   # if it's a gettext file we signal it
   if os.path.isfile(directory) and re.search("\.po(t)?$", directory):
     pot = True
   elif not os.path.isdir(directory):
-    print "%s is not a directory (or does not exist)" % (directory)
+    print("%s is not a directory (or does not exist)" % (directory))
     return False
 
   if not pot:
@@ -168,49 +169,74 @@ def PackDirectoryIntoFile(directory, pakFile):
 
   return True
 
-def UnpackFileIntoDirectory(pakFile, directory):
-  print "Unpacking %s to %s" % (pakFile, directory)
+def UnpackFileIntoDirectory(pakFile, pakFile2, directory):
+  print("Unpacking %s to %s" % (pakFile, directory))
 
   if not os.path.isfile(pakFile):
-    print "%s is not a file (or does not exist)" % (pakFile)
+    print("%s is not a file (or does not exist)" % (pakFile))
     return False
 
   data = ReadDataPack(pakFile)
+  data2 = ReadDataPack(pakFile2)
   #print data.encoding
 
   name = re.search("^([a-zA-Z-]+).*\.po$", directory)
   if name:
-    with open(directory, "w") as file:
-      file.write("msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: Vivaldi Chromium Strings\\n\"\n\"Language-Team: Vivaldi Translation Team\\n\"\n\"Last-Translator: Vivaldi Translation Team\\n\"\n\"Report-Msgid-Bugs-To: https://github.com/An-dz/ChromiumPoPak/issues\\n\"\n\"POT-Creation-Date: " +
-        time.strftime("%Y-%m-%d %H:%M+0000", time.gmtime(os.path.getmtime(pakFile))) +
-        "\\n\"\n\"PO-Revision-Date: " +
-        time.strftime("%Y-%m-%d %H:%M+0000", time.gmtime()) +
-        "\\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=UTF-8\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\"Language: " +
-        name.group(1).replace("-", "_") +
-        "\\n\"\n\"X-Generator: Vivaldi Translation Team Packer 1.0\\n\"\n\n")
-      for (resource_id, contents) in data.resources.iteritems():
-        contents = contents.replace("\"", "\\\"")
-        contents = contents.replace("\n", "\\n\"\n\"")
-        file.write("msgctxt \"" + str(resource_id) + "\"\nmsgid \"" + contents + "\"\nmsgstr \"" + contents + "\"\n\n")
+    po = polib.POFile()
+    # just development version, better metadata is to be done
+    po.metadata = {
+        'Project-Id-Version': '1.0',
+        'Report-Msgid-Bugs-To': 'nfsmaniac@vivaldi.net',
+        'POT-Creation-Date': '2007-10-18 14:00+0100',
+        'PO-Revision-Date': '2007-10-18 14:00+0100',
+        'Last-Translator': 'you <you@example.com>',
+        'Language-Team': 'English <yourteam@example.com>',
+        'MIME-Version': '1.0',
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Content-Transfer-Encoding': '8bit',
+    }
+    for (resource_id, contents), (resource_id2, contents2) in zip(data.resources.items(), data2.resources.items()):
+      po_flag = None
+      fileheader = contents.strip()[0:3].decode('utf-8', 'ignore')
+      string_id = str(resource_id)
+      original_string = str(contents, 'utf-8')
+      translated_string = str(contents2, 'utf-8')
+        
+      if translated_string == original_string and original_string != "Vivaldi" and original_string.isdigit() == False:
+        translated_string = ""
+        
+      if fileheader[0:1] == '<':
+        print(string_id + " is HTML")
+        po_flag = "HTML (EULA, error pages, etc.)"
+              
+      entry = polib.POEntry(
+          comment=po_flag,
+          msgctxt=string_id,
+          msgid=original_string,
+          msgstr=translated_string          
+      )
+      po.append(entry)
+      
+    po.save(directory)
   else:
     if os.path.exists(directory):
       shutil.rmtree(directory)
     os.makedirs(directory)
 
-    for (resource_id, contents) in data.resources.iteritems():
+    for (resource_id, contents) in data.resources.items():
       output_file = "%s/%s" % (directory, resource_id)
       with open(output_file, "wb") as file:
         file.write(contents)
 
 def FindIdForNameInHeaderFile(name, headerFile):
-  print "Extracting ID for %s from header file %s" % (name, headerFile)
+  print("Extracting ID for %s from header file %s" % (name, headerFile))
   with open(headerFile, "rb") as file:
     match = re.search("#define %s (\d+)" % (name), file.read())
     return int(match.group(1)) if match else None 
 
 def main():
   if len(sys.argv) <= 1:
-    print "Usage: %s <file_or_directory>" % sys.argv[0]
+    print("Usage: %s <file_or_directory>" % sys.argv[0])
     return
 
   path = sys.argv[1]
