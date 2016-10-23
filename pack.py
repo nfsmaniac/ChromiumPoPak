@@ -7,7 +7,7 @@ import paktools
 
 def main():
   if len(sys.argv) <= 1:
-    print "Usage: %s <directory> [file]" % sys.argv[0]
+    print("Usage: %s <directory> [file]" % sys.argv[0])
     return
   
   directory = sys.argv[1]
