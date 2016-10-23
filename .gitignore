@@ -3,4 +3,8 @@
 *.pak
 *.bak
 
+*.po
+*.pot
+*.mo
+
 devtools_resources/
