@@ -8,13 +8,14 @@ import paktools
 
 def main():
   if len(sys.argv) <= 1:
-    print "Usage: %s <file> [directory]" % sys.argv[0]
+    print("Usage: %s <file> [directory]" % sys.argv[0])
     return
   
   file      = sys.argv[1]
-  directory = sys.argv[2] if len(sys.argv) >= 3 else re.sub("\.pak$", "", file)
+  file2     = sys.argv[2]
+  directory = sys.argv[3] if len(sys.argv) >= 3 else re.sub("\.pak$", "", file)
   
-  paktools.UnpackFileIntoDirectory(file, directory)
+  paktools.UnpackFileIntoDirectory(file, file2, directory)
 
 if __name__ == '__main__':
   main()
