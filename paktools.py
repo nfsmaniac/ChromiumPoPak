@@ -197,7 +197,8 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, directory):
     }
     for (resource_id, contents), (resource_id2, contents2) in zip(data.resources.items(), data2.resources.items()):
       po_flag = None
-      fileheader = contents.strip()[0:3].decode('utf-8', 'ignore')
+      #fileheader = contents.strip()[0:3].decode('utf-8', 'ignore')
+      HTML_string = re.compile(r'(</.*>)')
       string_id = str(resource_id)
       original_string = str(contents, 'utf-8')
       translated_string = str(contents2, 'utf-8')
@@ -205,7 +206,8 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, directory):
       if translated_string == original_string and original_string != "Vivaldi" and original_string.isdigit() == False:
         translated_string = ""
         
-      if fileheader[0:1] == '<':
+      #if fileheader[0:1] == '<':
+      if HTML_string.search(original_string) != None:
         print(string_id + " is HTML")
         po_flag = "HTML (EULA, error pages, etc.)"
               
