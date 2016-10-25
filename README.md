@@ -14,4 +14,5 @@ Call `unpack.py` with _directory_ as a po file. Example: `python unpack.py en-US
 Simply call `pack.py` with _directory_ as a po file. Example: `python pack.py en_US.po`
 
 ### Batch conversion
-Call `batch-unpack.py` with _in_dir_ as input directory with multiple PAK files and _out_dir_ as output directory, whre PO files will be saved. Example: `python batch-unpack.py Locales converted`
+Call `batch-unpack.py` with _in_dir_ as input folder containing multiple PAK files and _out_dir_ as output folder where PO files will be saved. Example: `python batch-unpack.py Locales converted`
+You don't need to create the output directory first. Also if you leave there some PO file, the script will make a backup first.
