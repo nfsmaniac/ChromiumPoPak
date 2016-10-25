@@ -82,8 +82,7 @@ def ReadDataPack(input_file):
   return DataPackContents(resources, encoding)
 
 def WriteDataPackToString(resources, encoding):
-  """Write a map of id=>data into a string in the data pack format and return
-  it."""
+  """Write a map of id=>data into a string in the data pack format and return it."""
   ids = sorted(resources.keys())
   ret = []
 
@@ -115,13 +114,13 @@ def WriteDataPack(resources, output_file, encoding):
     file.write(content)
 
 def PackDirectoryIntoFile(directory, pakFile):
-  print("Packing %s as %s" % (directory, pakFile))
+  print("Packing {0} as {1}".format(directory, pakFile))
 
   # if it's a gettext file we signal it
   if os.path.isfile(directory) and re.search("\.po(t)?$", directory):
     pot = True
   elif not os.path.isdir(directory):
-    print("%s is not a directory (or does not exist)" % (directory))
+    print("{0} is not a directory (or does not exist)".format(directory))
     return False
 
   if not pot:
@@ -145,7 +144,7 @@ def PackDirectoryIntoFile(directory, pakFile):
     id = False
     strp = False
 
-    # iterate over the lines of te po file
+    # iterate over the lines of the po file
     data = {}
     file = open(directory, "r")
     for line in file.readlines():
@@ -169,24 +168,25 @@ def PackDirectoryIntoFile(directory, pakFile):
 
   return True
 
-def UnpackFileIntoDirectory(pakFile, pakFile2, directory):
-  print("Unpacking %s to %s" % (pakFile, directory))
+def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
+  print("Converting {0} to {1}".format(pakFile2, poFile))
 
   if not os.path.isfile(pakFile):
-    print("%s is not a file (or does not exist)" % (pakFile))
+    print("{0} is not a file (or does not exist)".format(pakFile))
     return False
 
   data = ReadDataPack(pakFile)
   data2 = ReadDataPack(pakFile2)
   #print data.encoding
 
-  name = re.search("^([a-zA-Z-]+).*\.po$", directory)
-  if name:
+  name = os.path.basename(poFile)
+  name = os.path.splitext(name)
+  if name[1].lower() == ".po":
     po = polib.POFile()
     # just development version, better metadata is to be done
     po.metadata = {
         'Project-Id-Version': '1.0',
-        'Report-Msgid-Bugs-To': 'nfsmaniac@vivaldi.net',
+        'Report-Msgid-Bugs-To': 'you@example.com',
         'POT-Creation-Date': '2007-10-18 14:00+0100',
         'PO-Revision-Date': '2007-10-18 14:00+0100',
         'Last-Translator': 'you <you@example.com>',
@@ -198,7 +198,7 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, directory):
     for (resource_id, contents), (resource_id2, contents2) in zip(data.resources.items(), data2.resources.items()):
       po_flag = None
       #fileheader = contents.strip()[0:3].decode('utf-8', 'ignore')
-      HTML_string = re.compile(r'(</.*>)')
+      HTML_string = re.compile(r'(</.*>)') 
       string_id = str(resource_id)
       original_string = str(contents, 'utf-8')
       translated_string = str(contents2, 'utf-8')
@@ -208,7 +208,6 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, directory):
         
       #if fileheader[0:1] == '<':
       if HTML_string.search(original_string) != None:
-        print(string_id + " is HTML")
         po_flag = "HTML (EULA, error pages, etc.)"
               
       entry = polib.POEntry(
@@ -219,26 +218,26 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, directory):
       )
       po.append(entry)
       
-    po.save(directory)
+    po.save(poFile)
   else:
     if os.path.exists(directory):
       shutil.rmtree(directory)
     os.makedirs(directory)
 
     for (resource_id, contents) in data.resources.items():
-      output_file = "%s/%s" % (directory, resource_id)
+      output_file = "{0}/{1}".format(directory, resource_id)
       with open(output_file, "wb") as file:
         file.write(contents)
 
 def FindIdForNameInHeaderFile(name, headerFile):
-  print("Extracting ID for %s from header file %s" % (name, headerFile))
+  print("Extracting ID for {0} from header file {1}".format(name, headerFile))
   with open(headerFile, "rb") as file:
-    match = re.search("#define %s (\d+)" % (name), file.read())
+    match = re.search("#define {0} (\d+)".format(name), file.read()) # not sure about the syntax
     return int(match.group(1)) if match else None 
 
 def main():
   if len(sys.argv) <= 1:
-    print("Usage: %s <file_or_directory>" % sys.argv[0])
+    print("Usage: {0} <file_or_directory>".format(sys.argv[0]))
     return
 
   path = sys.argv[1]
