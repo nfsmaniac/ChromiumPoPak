@@ -7,11 +7,11 @@ import paktools
 
 def main():
   if len(sys.argv) <= 1:
-    print("Usage: %s <directory> [file]" % sys.argv[0])
+    print("Usage: {0} <directory> [file]".format(sys.argv[0])
     return
   
   directory = sys.argv[1]
-  file      = sys.argv[2] if len(sys.argv) >= 3 else "%s.pak" % (directory.replace(".po", ""))
+  file      = sys.argv[2] if len(sys.argv) >= 3 else "{0}.pak".format(directory.replace(".po", ""))
   
   paktools.PackDirectoryIntoFile(directory, file)
 
