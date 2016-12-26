@@ -101,8 +101,8 @@ def WriteDataPackToString(resources, encoding):
 
   # Write data.
   for id in ids:
-    ret.append(resources[id])
-  return ''.join(ret)
+    ret.append(resources[id].encode())
+  return b''.join(ret)
 
 def WriteDataPack(resources, output_file, encoding):
   """Write a map of id=>data into output_file as a data pack."""
@@ -144,8 +144,7 @@ def PackDirectoryIntoFile(directory, pakFile):
         POstring = entry.msgstr
       #print(id)
       #print(POstring) 
-        
-    data[int(id)] = POstring
+      data[int(id)] = POstring
 
   WriteDataPack(data, pakFile, UTF8)
 
