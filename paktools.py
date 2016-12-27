@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 PYTHONIOENCODING="UTF-8"
+script_revision = "20161227-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
 
 '''Provides functions to handle .pak files as provided by Chromium. If the optional argument is a file, it will be unpacked, if it is a directory, it will be packed.'''
 
@@ -38,7 +39,7 @@ import struct
 import sys
 import re
 import shutil
-import time
+from time import gmtime, strftime
 import polib
 
 PACK_FILE_VERSION = 4
@@ -161,22 +162,39 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
   data2 = ReadDataPack(pakFile2)
   #print data.encoding
 
-  name = os.path.basename(poFile)
-  name = os.path.splitext(name)
-  if name[1].lower() == ".po":
+  pakName = os.path.basename(pakFile2)
+  pakName = os.path.splitext(pakName)
+  lang = pakName[0].split("-")
+  if len(pakName[0]) > 2:
+    lang_code = lang[0] + "_" + lang[1].upper()
+  else:
+    lang_code = pakName[0]
+  
+  with open("lang_codes.txt") as lng:
+    for line in lng:
+        if lang[0] + "\t" in line:
+             language = line.replace(lang[0] + "\t", "")
+             language = language.replace("\n", "")
+  
+  poName = os.path.basename(poFile)
+  poName = os.path.splitext(poName)
+  
+  if poName[1].lower() == ".po":
     po = polib.POFile()
-    # just development version, better metadata is to be done
     po.metadata = {
         'Project-Id-Version': '1.0',
-        'Report-Msgid-Bugs-To': 'you@example.com',
-        'POT-Creation-Date': '2007-10-18 14:00+0100',
-        'PO-Revision-Date': '2007-10-18 14:00+0100',
-        'Last-Translator': 'you <you@example.com>',
-        'Language-Team': 'English <yourteam@example.com>',
+        'Report-Msgid-Bugs-To': 'https://github.com/nfsmaniac/Vivaldi_PakPo/issues',
+        'POT-Creation-Date': strftime("%Y-%m-%d %H:%M+0000", gmtime(os.path.getmtime(pakFile))),
+        'PO-Revision-Date': strftime("%Y-%m-%d %H:%M+0000", gmtime()),
+        'Last-Translator': language + ' Translation Team',
+        'Language-Team': language + ' Translation Team',
+        'Language': lang_code,
         'MIME-Version': '1.0',
         'Content-Type': 'text/plain; charset=utf-8',
         'Content-Transfer-Encoding': '8bit',
+        'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0 (' + script_revision + ')'
     }
+    
     for (resource_id, contents), (resource_id2, contents2) in zip(data.resources.items(), data2.resources.items()):
       po_flag = None
       #fileheader = contents.strip()[0:3].decode('utf-8', 'ignore')
