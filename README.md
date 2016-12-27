@@ -15,3 +15,5 @@ Simply call `pack.py` with _directory_ as a po file. Example: `python pack.py en
 
 ### Batch conversion
 Call `batch-unpack.py` with _in_dir_ as input folder containing multiple PAK files and _out_dir_ as output folder where PO files will be saved. You don't need to create the output directory first. Also if you leave there some PO file, the script will make a backup first. Example: `python batch-unpack.py Locales converted`
+
+Call `batch-pack.py` with _in_dir_ as input folder containing multiple PO files and _out_dir_ as output folder where PAK files will be saved. You don't need to create the output directory first. Also if you leave there some PAK file, the script will make a backup first. Example: `python batch-pack.py converted Locales`
