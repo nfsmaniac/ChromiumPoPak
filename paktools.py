@@ -46,13 +46,10 @@ HEADER_LENGTH = 2 * 4 + 1  # Two uint32s. (file version, number of entries) and
                            # one uint8 (encoding of text resources)
 BINARY, UTF8, UTF16 = list(range(3))
 
-
 class WrongFileVersion(Exception):
   pass
 
-
 DataPackContents = collections.namedtuple('DataPackContents', 'resources encoding')
-
 
 def ReadDataPack(input_file):
   """Reads a data pack file and returns a dictionary."""
@@ -98,14 +95,14 @@ def WriteDataPackToString(resources, encoding):
   data_offset = HEADER_LENGTH + index_length
   for id in ids:
     ret.append(struct.pack("<HI", id, data_offset))
-    data_offset += len(resources[id])
+    data_offset += len(resources[id].encode())
 
   ret.append(struct.pack("<HI", 0, data_offset))
 
   # Write data.
   for id in ids:
-    ret.append(resources[id])
-  return ''.join(ret)
+    ret.append(resources[id].encode())
+  return b''.join(ret)
 
 def WriteDataPack(resources, output_file, encoding):
   """Write a map of id=>data into output_file as a data pack."""
@@ -137,32 +134,17 @@ def PackDirectoryIntoFile(directory, pakFile):
       with open(input_file, "rb") as file:
         data[int(id)] = file.read()
   else:
-    # regular expressions to use
-    msgctxt = re.compile("msgctxt \"(\d+)\"")
-    msgstrg = re.compile("msgstr \"(.*)\"")
-    msgstrp = re.compile("\"(.*)\"")
-    id = False
-    strp = False
-
-    # iterate over the lines of the po file
     data = {}
-    file = open(directory, "r")
-    for line in file.readlines():
-      ctxt = msgctxt.match(line)
-      text = msgstrg.match(line)
-      rest = msgstrp.match(line)
-      if ctxt:
-        if id:
-          strp = strp.replace("\\\"", "\"")
-          data[int(id)] = strp.replace("\\n", "\n")
-        id = ctxt.group(1)
-        strp = False
-      if text and id:
-        strp = text.expand(text.group(1))
-      if rest and strp:
-        strp += rest.expand(rest.group(1))
-    strp = strp.replace("\\\"", "\"")
-    data[int(id)] = strp.replace("\\n", "\n")
+    po = polib.pofile(directory)
+    for entry in po:
+      id = entry.msgctxt
+      if entry.msgstr == "":
+        POstring = entry.msgid
+      else:
+        POstring = entry.msgstr
+      #print(id)
+      #print(POstring) 
+      data[int(id)] = POstring
 
   WriteDataPack(data, pakFile, UTF8)
 
@@ -198,7 +180,7 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
     for (resource_id, contents), (resource_id2, contents2) in zip(data.resources.items(), data2.resources.items()):
       po_flag = None
       #fileheader = contents.strip()[0:3].decode('utf-8', 'ignore')
-      HTML_string = re.compile(r'(</.*>)') 
+      HTML_string = re.compile(r'(</.*>)')
       string_id = str(resource_id)
       original_string = str(contents, 'utf-8')
       translated_string = str(contents2, 'utf-8')
