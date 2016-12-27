@@ -5,11 +5,11 @@ import sys
 import fnmatch
 import paktools
 
-'''Batch unpack of all PAK files in a directory'''
+'''Batch convert all PAK files in a directory to gettext PO'''
 
 def main():
   if len(sys.argv) <= 1:
-    print("Usage: %s [input directory] [output directory]" % sys.argv[0])
+    print("Usage: {0} [input directory] [output directory]".format(sys.argv[0]))
     return
   
   in_dir      = sys.argv[1]
@@ -34,14 +34,11 @@ def main():
       
         PAKfile = os.path.join(in_dir, file)
         POfile = os.path.join(out_dir, file.replace(".pak", ".po"))
-        #print(en_PAK)
-        #print(PAKfile)
-        #print(out_dir)
 
         print("[{0} of {1} done]".format(current_file, files_count))
         paktools.UnpackFileIntoDirectory(en_PAK, PAKfile, POfile)
         current_file += 1
-    print("[Conversion complete!]")
+    print("\n[Conversion complete!]")
   else:
     print("ERROR: No file 'en-US.pak' found! Check the input directory or make sure that 'en-US.pak' exists.")
 
