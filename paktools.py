@@ -95,7 +95,7 @@ def WriteDataPackToString(resources, encoding):
   data_offset = HEADER_LENGTH + index_length
   for id in ids:
     ret.append(struct.pack("<HI", id, data_offset))
-    data_offset += len(resources[id])
+    data_offset += len(resources[id].encode())
 
   ret.append(struct.pack("<HI", 0, data_offset))
 
