@@ -1,6 +1,6 @@
 af	Afrikaans
 af-ZA	Afrikaans (South Africa)
-am	Armenian
+am	Amharic
 ar	Arabic
 ar-AE	Arabic (U.A.E.)
 ar-BH	Arabic (Bahrain)
