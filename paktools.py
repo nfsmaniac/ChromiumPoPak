@@ -222,8 +222,8 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
       entry = polib.POEntry(
           comment=po_flag,
           msgctxt=string_id,
-          msgid=original_string,
-          msgstr=translated_string          
+          msgid=original_string.replace("\r\n", "\n"),
+          msgstr=translated_string.replace("\r\n", "\n")          
       )
       po.append(entry)
     
