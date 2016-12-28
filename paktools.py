@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 PYTHONIOENCODING="UTF-8"
-script_revision = "20161227-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
+script_revision = "20161228-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
 
 '''Provides functions to handle .pak files as provided by Chromium. If the optional argument is a file, it will be unpacked, if it is a directory, it will be packed.'''
 
@@ -41,6 +41,7 @@ import re
 import shutil
 from time import gmtime, strftime
 import polib
+import hashlib
 
 PACK_FILE_VERSION = 4
 HEADER_LENGTH = 2 * 4 + 1  # Two uint32s. (file version, number of entries) and
@@ -157,7 +158,10 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
   if not os.path.isfile(pakFile):
     print("{0} is not a file (or does not exist)".format(pakFile))
     return False
-
+ 
+  pakHash = hashlib.md5()
+  pakHash.update(open(pakFile, 'rb').read())
+ 
   data = ReadDataPack(pakFile)
   data2 = ReadDataPack(pakFile2)
   #print data.encoding
@@ -165,7 +169,7 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
   pakName = os.path.basename(pakFile2)
   pakName = os.path.splitext(pakName)
   lang = pakName[0].split("-")
-  if len(pakName[0]) > 2:
+  if len(pakName[0]) > 3:
     lang_code = lang[0] + "_" + lang[1].upper()
   else:
     lang_code = pakName[0]
@@ -175,6 +179,10 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
         if lang[0] + "\t" in line:
              language = line.replace(lang[0] + "\t", "")
              language = language.replace("\n", "")
+  
+  if not 'language' in locals():
+    language = "Vivaldi"
+    print("WARNING: " + lang_code + " is not in database.")
   
   poName = os.path.basename(poFile)
   poName = os.path.splitext(poName)
@@ -192,6 +200,7 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
         'MIME-Version': '1.0',
         'Content-Type': 'text/plain; charset=utf-8',
         'Content-Transfer-Encoding': '8bit',
+        'Original-PAK-fingerprint-MD5': pakHash.hexdigest(),
         'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0 (' + script_revision + ')'
     }
     
@@ -217,8 +226,12 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
           msgstr=translated_string          
       )
       po.append(entry)
+    
+    if poName[0] == "en-US":
+      po.save(poFile.replace(".po", ".pot"))
+    else:
+      po.save(poFile) 
       
-    po.save(poFile)
   else:
     if os.path.exists(directory):
       shutil.rmtree(directory)
