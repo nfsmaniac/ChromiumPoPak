@@ -1,5 +1,6 @@
 af	Afrikaans
 af-ZA	Afrikaans (South Africa)
+am	Armenian
 ar	Arabic
 ar-AE	Arabic (U.A.E.)
 ar-BH	Arabic (Bahrain)
@@ -25,6 +26,7 @@ be-BY	Belarusian (Belarus)
 bg	Bulgarian
 bg-BG	Bulgarian (Bulgaria)
 bs-BA	Bosnian (Bosnia and Herzegovina)
+bn	Brunei
 ca	Catalan
 ca-ES	Catalan (Spain)
 cs	Czech
@@ -87,6 +89,7 @@ fa	Farsi
 fa-IR	Farsi (Iran)
 fi	Finnish
 fi-FI	Finnish (Finland)
+fil	Filipino
 fo	Faroese
 fo-FO	Faroese (Faroe Islands)
 fr	French
@@ -140,6 +143,7 @@ mi	Maori
 mi-NZ	Maori (New Zealand)
 mk	FYRO Macedonian
 mk-MK	FYRO Macedonian (Former Yugoslav Republic of Macedonia)
+ml	Malayalam
 mn	Mongolian
 mn-MN	Mongolian (Mongolia)
 mr	Marathi
@@ -192,6 +196,7 @@ sl	Slovenian
 sl-SI	Slovenian (Slovenia)
 sq	Albanian
 sq-AL	Albanian (Albania)
+sr	Serbian
 sr-BA	Serbian (Latin) (Bosnia and Herzegovina)
 sr-BA	Serbian (Cyrillic) (Bosnia and Herzegovina)
 sr-SP	Serbian (Latin) (Serbia and Montenegro)
