@@ -1,4 +1,4 @@
-# Chromium Language PAK
+# Vivaldi Translation Team PAK–PO converter
 Fork with focus on Vivaldi browser that allows conversion of language PAK files to Gettext PO and from PO to PAK
 
 ## Requirments
