@@ -26,7 +26,7 @@ be-BY	Belarusian (Belarus)
 bg	Bulgarian
 bg-BG	Bulgarian (Bulgaria)
 bs-BA	Bosnian (Bosnia and Herzegovina)
-bn	Brunei
+bn	Bengali
 ca	Catalan
 ca-ES	Catalan (Spain)
 cs	Czech
