@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 PYTHONIOENCODING="UTF-8"
-script_revision = "20161228-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
+script_revision = "20161230-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
 
 '''Provides functions to handle .pak files as provided by Chromium. If the optional argument is a file, it will be unpacked, if it is a directory, it will be packed.'''
 
@@ -246,7 +246,39 @@ def FindIdForNameInHeaderFile(name, headerFile):
   print("Extracting ID for {0} from header file {1}".format(name, headerFile))
   with open(headerFile, "rb") as file:
     match = re.search("#define {0} (\d+)".format(name), file.read()) # not sure about the syntax
-    return int(match.group(1)) if match else None 
+    return int(match.group(1)) if match else None
+
+def CreatePatch(originalPo, editedPo):
+  print("Comparing {0} with {1} and saving what was changed.". format(originalPo, editedPo))
+  
+  po = polib.pofile(originalPo)
+  po2 = polib.pofile(editedPo)
+  po3 = polib.POFile()
+  po3.metadata = {
+    'Project-Id-Version': '1.0',
+    'Report-Msgid-Bugs-To': 'https://github.com/nfsmaniac/Vivaldi_PakPo/issues',
+    'POT-Creation-Date': strftime("%Y-%m-%d %H:%M+0000", gmtime(os.path.getmtime(originalPo))),
+    'PO-Revision-Date': strftime("%Y-%m-%d %H:%M+0000", gmtime(os.path.getmtime(editedPo))),
+    #'Last-Translator': language + ' Translation Team',
+    #'Language-Team': language + ' Translation Team',
+    #'Language': lang_code,
+    'MIME-Version': '1.0',
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Content-Transfer-Encoding': '8bit',
+     #'Original-PAK-fingerprint-MD5': pakHash.hexdigest(),
+    'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0 (' + script_revision + ')'
+  }
+
+  for original, edited in zip(po, po2):
+    if original.msgid == edited.msgid:
+      if original.msgstr != edited.msgstr and original.msgid.isdigit() == False:        
+        patchEntry = polib.POEntry(
+          comment=edited.comment,
+          msgid=edited.msgid.replace("\r\n", "\n"),
+          msgstr=edited.msgstr.replace("\r\n", "\n")          
+        )
+        po3.append(patchEntry)
+  po3.save("patch.po")        
 
 def main():
   if len(sys.argv) <= 1:
