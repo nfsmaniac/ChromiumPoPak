@@ -17,3 +17,9 @@ Simply call `pack.py` with _directory_ as a po file. Example: `python pack.py en
 Call `batch-unpack.py` with _in_dir_ as input folder containing multiple PAK files and _out_dir_ as output folder where PO files will be saved. You don't need to create the output directory first. Also if you leave there some PO file, the script will make a backup first. Example: `python batch-unpack.py Locales converted`
 
 Call `batch-pack.py` with _in_dir_ as input folder containing multiple PO files and _out_dir_ as output folder where PAK files will be saved. You don't need to create the output directory first. Also if you leave there some PAK file, the script will make a backup first. Example: `python batch-pack.py converted Locales`
+
+### Create & Apply patch
+For easy migration of ranslation between Vivaldi browser release, it is needed to create a patch. Call `mkpatch.py` with _originalPO_ as stock PO file generated from official PAK file and _editedPO_ as changed PO file by you.
+Example: `python mkpatch.py cs.po cs_edit.po`
+
+To apply a patch, call `apply-patch.py` with _originalPO_ as stock PO file generated from official PAK file and _patchPO_ as a patch file generated in previous step.
