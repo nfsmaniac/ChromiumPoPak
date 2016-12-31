@@ -249,7 +249,7 @@ def FindIdForNameInHeaderFile(name, headerFile):
     return int(match.group(1)) if match else None
 
 def CreatePatch(originalPo, editedPo):
-  print("Comparing {0} with {1} and saving what was changed.". format(originalPo, editedPo))
+  print("Comparing {0} with {1} and saving what was changed to {3}.". format(originalPo, editedPo, "patch.po"))
   
   po = polib.pofile(originalPo)
   po2 = polib.pofile(editedPo)
@@ -274,11 +274,26 @@ def CreatePatch(originalPo, editedPo):
       if original.msgstr != edited.msgstr and original.msgid.isdigit() == False:        
         patchEntry = polib.POEntry(
           comment=edited.comment,
-          msgid=edited.msgid.replace("\r\n", "\n"),
-          msgstr=edited.msgstr.replace("\r\n", "\n")          
+          msgid=edited.msgid,          #.replace("\r\n", "\n"),
+          msgstr=edited.msgstr         #.replace("\r\n", "\n")          
         )
         po3.append(patchEntry)
-  po3.save("patch.po")        
+  po3.save("patch.po")
+
+def ApplyPatch(originalPo, patchPo):
+  print("Applying patch {0} to {1}.".format(patchPo, originalPo))
+  
+  poOrig =  polib.pofile(originalPo)
+  poPatch = polib.pofile(patchPo)
+
+  for patchEntry in poPatch:
+    originalEntry = poOrig.find(patchEntry.msgid)
+    if originalEntry.msgid == patchEntry.msgid and patchEntry.msgid.isdigit() == False:
+      originalEntry.msgstr = patchEntry.msgstr
+    else:
+      print("WARNING: ""{0}"" was skipped. String not found or code improvement is needed.".format(patchEntry.msgid))
+  poOrig.save(originalPo)
+    
 
 def main():
   if len(sys.argv) <= 1:
