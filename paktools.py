@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 PYTHONIOENCODING="UTF-8"
-script_revision = "20161230-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
+script_revision = "20161231-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
 
 '''Provides functions to handle .pak files as provided by Chromium. If the optional argument is a file, it will be unpacked, if it is a directory, it will be packed.'''
 
@@ -201,7 +201,7 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
         'Content-Type': 'text/plain; charset=utf-8',
         'Content-Transfer-Encoding': '8bit',
         'Original-PAK-fingerprint-MD5': pakHash.hexdigest(),
-        'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0 (' + script_revision + ')'
+        'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0β1 (' + script_revision + ')'
     }
     
     for (resource_id, contents), (resource_id2, contents2) in zip(data.resources.items(), data2.resources.items()):
