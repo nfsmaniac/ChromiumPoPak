@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 PYTHONIOENCODING="UTF-8"
-script_revision = "20161231-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
+script_revision = "20170111-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
 
 '''Provides functions to handle .pak files as provided by Chromium. If the optional argument is a file, it will be unpacked, if it is a directory, it will be packed.'''
 
@@ -248,12 +248,12 @@ def FindIdForNameInHeaderFile(name, headerFile):
     match = re.search("#define {0} (\d+)".format(name), file.read()) # not sure about the syntax
     return int(match.group(1)) if match else None
 
-def CreatePatch(originalPo, editedPo):
-  print("Comparing {0} with {1} and saving what was changed to {3}.". format(originalPo, editedPo, "patch.po"))
+def CreatePatch(originalPo, editedPo, patchPo):
+  print("Comparing {0} with {1} and saving what was changed to {2}.". format(originalPo, editedPo, patchPo))
   
   po = polib.pofile(originalPo)
   po2 = polib.pofile(editedPo)
-  po3 = polib.POFile()
+  po3 = polib.POFile() #check_for_duplicates=True)
   po3.metadata = {
     'Project-Id-Version': '1.0',
     'Report-Msgid-Bugs-To': 'https://github.com/nfsmaniac/Vivaldi_PakPo/issues',
@@ -269,16 +269,18 @@ def CreatePatch(originalPo, editedPo):
     'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0 (' + script_revision + ')'
   }
 
-  for original, edited in zip(po, po2):
-    if original.msgid == edited.msgid:
-      if original.msgstr != edited.msgstr and original.msgid.isdigit() == False:        
+  for original in po:
+    edited = po2.find(original.msgctxt, by='msgctxt')
+    if edited and original.msgid == edited.msgid:
+      if original.msgstr != edited.msgstr and edited.msgid != edited.msgstr and original.msgid.isdigit() == False:
         patchEntry = polib.POEntry(
           comment=edited.comment,
-          msgid=edited.msgid,          #.replace("\r\n", "\n"),
-          msgstr=edited.msgstr         #.replace("\r\n", "\n")          
+          msgctxt=edited.msgctxt,
+          msgid=original.msgid,
+          msgstr=edited.msgstr          
         )
         po3.append(patchEntry)
-  po3.save("patch.po")
+  po3.save(patchPo)
 
 def ApplyPatch(originalPo, patchPo):
   print("Applying patch {0} to {1}.".format(patchPo, originalPo))
@@ -288,11 +290,19 @@ def ApplyPatch(originalPo, patchPo):
 
   for patchEntry in poPatch:
     originalEntry = poOrig.find(patchEntry.msgid)
-    if originalEntry.msgid == patchEntry.msgid and patchEntry.msgid.isdigit() == False:
-      originalEntry.msgstr = patchEntry.msgstr
+    if originalEntry:
+      if originalEntry.msgid == patchEntry.msgid and patchEntry.msgid.isdigit() == False and patchEntry.msgid != "default":
+        if not ", sans-serif" in originalEntry.msgid:
+          originalEntry.msgstr = patchEntry.msgstr
     else:
       print("WARNING: ""{0}"" was skipped. String not found or code improvement is needed.".format(patchEntry.msgid))
   poOrig.save(originalPo)
+
+def MergePO(poFile, potFile, outputPo):
+  po = polib.pofile(poFile)
+  pot = polib.pofile(potFile)
+  po.merge(pot)
+  po.save(outputPo)
     
 
 def main():
