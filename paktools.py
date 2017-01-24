@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 PYTHONIOENCODING="UTF-8"
-script_revision = "20170111-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
+script_revision = "20170121-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
 
 '''Provides functions to handle .pak files as provided by Chromium. If the optional argument is a file, it will be unpacked, if it is a directory, it will be packed.'''
 
@@ -42,6 +42,7 @@ import shutil
 from time import gmtime, strftime
 import polib
 import hashlib
+import unicodedata
 
 PACK_FILE_VERSION = 4
 HEADER_LENGTH = 2 * 4 + 1  # Two uint32s. (file version, number of entries) and
@@ -52,6 +53,32 @@ class WrongFileVersion(Exception):
   pass
 
 DataPackContents = collections.namedtuple('DataPackContents', 'resources encoding')
+
+def percentage(part, whole):
+  return 100 * float(part)/float(whole)
+
+def startProgress(title):
+    global progress_x
+    sys.stdout.write(title + ": [" + "-"*40 + "]" + chr(8)*41)
+    sys.stdout.flush()
+    progress_x = 0
+
+def progress(x):
+    global progress_x
+    x = int(x * 40 // 100)
+    sys.stdout.write("#" * (x - progress_x))
+    sys.stdout.flush()
+    progress_x = x
+
+def endProgress():
+    sys.stdout.write("#" * (40 - progress_x) + "]\n")
+    sys.stdout.flush()
+
+def NFD(text):
+    return unicodedata.normalize('NFD', text)
+
+def canonical_caseless(text):
+    return NFD(NFD(text).casefold())
 
 def ReadDataPack(input_file):
   """Reads a data pack file and returns a dictionary."""
@@ -165,6 +192,9 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
   data = ReadDataPack(pakFile)
   data2 = ReadDataPack(pakFile2)
   #print data.encoding
+  
+  entry_count_total = len(data.resources.items())
+  entry_count_current = 0
 
   pakName = os.path.basename(pakFile2)
   pakName = os.path.splitext(pakName)
@@ -204,6 +234,8 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
         'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0β1 (' + script_revision + ')'
     }
     
+    startProgress("Converting PAK->PO")
+    
     for (resource_id, contents), (resource_id2, contents2) in zip(data.resources.items(), data2.resources.items()):
       po_flag = None
       #fileheader = contents.strip()[0:3].decode('utf-8', 'ignore')
@@ -226,11 +258,15 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
           msgstr=translated_string.replace("\r\n", "\n")          
       )
       po.append(entry)
+      entry_count_current = entry_count_current + 1
+      progress(percentage(entry_count_current, entry_count_total))
     
     if poName[0] == "en-US":
       po.save(poFile.replace(".po", ".pot"))
     else:
-      po.save(poFile) 
+      po.save(poFile)
+    
+    endProgress() 
       
   else:
     if os.path.exists(directory):
@@ -266,7 +302,7 @@ def CreatePatch(originalPo, editedPo, patchPo):
     'Content-Type': 'text/plain; charset=utf-8',
     'Content-Transfer-Encoding': '8bit',
      #'Original-PAK-fingerprint-MD5': pakHash.hexdigest(),
-    'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0 (' + script_revision + ')'
+    'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0β1 (' + script_revision + ')'
   }
 
   for original in po:
@@ -287,17 +323,57 @@ def ApplyPatch(originalPo, patchPo):
   
   poOrig =  polib.pofile(originalPo)
   poPatch = polib.pofile(patchPo)
+  entry_count_total = len([e for e in poPatch])
+  entry_count_current = 0
+  skipped_count = 0
+  
+  startProgress("Applying patch")
 
-  for patchEntry in poPatch:
-    originalEntry = poOrig.find(patchEntry.msgid)
-    if originalEntry:
-      if originalEntry.msgid == patchEntry.msgid and patchEntry.msgid.isdigit() == False and patchEntry.msgid != "default":
-        if not ", sans-serif" in originalEntry.msgid:
-          originalEntry.msgstr = patchEntry.msgstr
+  with open("patch.log", "a") as logfile:
+    logfile.write("\n[" + strftime("%Y-%m-%d %H:%M+0000", gmtime()) + "]\n")
+    for patchEntry in poPatch:
+      originalEntry = poOrig.find(patchEntry.msgid)
+      if originalEntry:
+        if originalEntry.msgid == patchEntry.msgid and patchEntry.msgid.isdigit() == False and patchEntry.msgid != "default":
+          if not ", sans-serif" in originalEntry.msgid:
+            originalEntry.msgstr = patchEntry.msgstr
+          
+            entry_count_current = entry_count_current + 1
+            progress(percentage(entry_count_current, entry_count_total))
+      
+      else:
+        originalEntry = poOrig.find(patchEntry.msgctxt, by='msgctxt')
+        if originalEntry:
+          if canonical_caseless(originalEntry.msgid) == canonical_caseless(patchEntry.msgid) and patchEntry.msgid != "default":
+            if not ", sans-serif" in originalEntry.msgid:
+              originalEntry.msgstr = patchEntry.msgstr
+              
+              entry_count_current = entry_count_current + 1
+              progress(percentage(entry_count_current, entry_count_total))
+        else:
+          for originalEntry in poOrig:
+            origMsgstr = originalEntry.msgstr
+            numOfPatched = entry_count_current
+            if canonical_caseless(originalEntry.msgid.replace("&", "")) == canonical_caseless(patchEntry.msgid.replace("&", "")) or originalEntry.msgid.replace("&", "").lower() == patchEntry.msgid.replace("&", "").lower():
+              #if -100 <= (int(patchEntry.msgctxt) - int(originalEntry.msgctxt)) <= 100:
+              originalEntry.msgstr = patchEntry.msgstr
+              
+              entry_count_current = entry_count_current + 1
+              progress(percentage(entry_count_current, entry_count_total))
+      if 'origMsgstr' in locals():
+        if origMsgstr == originalEntry.msgstr and numOfPatched == entry_count_current:
+          #print("WARNING: \"{0}\" was skipped. String not found or code improvement is needed.".format(patchEntry.msgid))
+          skipped_count = skipped_count + 1
+          logfile.write("Skipped #{0}: {1}\n".format(patchEntry.msgctxt, patchEntry.msgid))
+
+    poOrig.save(originalPo)
+  
+    endProgress()  
+    if skipped_count > 0:
+      print("\n" + str(skipped_count) +" entries were skipped. See patch.log for details.")
     else:
-      print("WARNING: ""{0}"" was skipped. String not found or code improvement is needed.".format(patchEntry.msgid))
-  poOrig.save(originalPo)
-
+      logfile.write("No errors")
+    
 def MergePO(poFile, potFile, outputPo):
   po = polib.pofile(poFile)
   pot = polib.pofile(potFile)
