@@ -14,8 +14,11 @@ def main():
   
   in_dir      = sys.argv[1]
   out_dir     = sys.argv[2]
-  
-  backup_done = False  
+
+  pack(in_dir, out_dir)
+
+def pack(in_dir, out_dir):
+  backup_done = False                # !!! Change to True if you want to use it with Auto-Patcher/Launcher tool !!!  
 
   if len(fnmatch.filter(os.listdir(in_dir), '*.po')) > 0:
     files_count = len(fnmatch.filter(os.listdir(in_dir), '*.po'))
@@ -28,6 +31,8 @@ def main():
         if os.path.exists(out_dir) == True and backup_done == False:
           print("WARNING: Directory exists! Don't worry, backing up existing PO files.")
           for POfile in os.listdir(out_dir):
+            if ".bak" in file:                                                        # Cleanup
+              os.remove(file)
             os.rename(os.path.join(out_dir, POfile), os.path.join(out_dir, POfile.replace(".pak", ".bak")))
           backup_done = True
       
