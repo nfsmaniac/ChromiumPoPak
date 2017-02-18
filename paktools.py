@@ -5,10 +5,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 # (http://code.google.com/searchframe#OAMlx_jo-ck/src/LICENSE)
+#
+# Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
 
 # This file:
 #
-# Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
+# Copyright (c) 2016-2017 nfsmaniac
 #  
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"), 
@@ -29,7 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 PYTHONIOENCODING="UTF-8"
-script_revision = "20170121-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
+script_revision = "20170214-offical" # Everytime you edit the script, please update. Format: YYYYMMDD-official|custom (chnge to custom, if it's your home edit, unpublished/unmerged code in GitHub repo)
 
 '''Provides functions to handle .pak files as provided by Chromium. If the optional argument is a file, it will be unpacked, if it is a directory, it will be packed.'''
 
@@ -185,6 +187,19 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
   if not os.path.isfile(pakFile):
     print("{0} is not a file (or does not exist)".format(pakFile))
     return False
+    
+  pakName = os.path.basename(pakFile2)
+  pakName = os.path.splitext(pakName)
+  lang = pakName[0].split("-")
+  if os.path.isdir("patch") == True and os.path.exists("launch-vivaldi.exe") == True:
+    patchExists = False
+    for f in os.listdir("patch"):
+      if f.startswith(str(lang[0])):
+        patchExists = True
+    if patchExists == False:
+      print("Patch for " + os.path.basename(pakFile2) + " is not available. Skipping...")
+      return None
+
  
   pakHash = hashlib.md5()
   pakHash.update(open(pakFile, 'rb').read())
@@ -196,19 +211,20 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
   entry_count_total = len(data.resources.items())
   entry_count_current = 0
 
-  pakName = os.path.basename(pakFile2)
-  pakName = os.path.splitext(pakName)
-  lang = pakName[0].split("-")
   if len(pakName[0]) > 3:
     lang_code = lang[0] + "_" + lang[1].upper()
   else:
     lang_code = pakName[0]
   
-  with open("lang_codes.txt") as lng:
-    for line in lng:
-        if lang[0] + "\t" in line:
-             language = line.replace(lang[0] + "\t", "")
-             language = language.replace("\n", "")
+  if os.path.exists("lang_codes.txt") == True:
+    with open("lang_codes.txt") as lng:
+      for line in lng:
+          if lang[0] + "\t" in line:
+              language = line.replace(lang[0] + "\t", "")
+              language = language.replace("\n", "")
+  else:
+    print("WARNING: Language code database not found.")
+    language = "Vivaldi"
   
   if not 'language' in locals():
     language = "Vivaldi"
@@ -231,7 +247,7 @@ def UnpackFileIntoDirectory(pakFile, pakFile2, poFile):
         'Content-Type': 'text/plain; charset=utf-8',
         'Content-Transfer-Encoding': '8bit',
         'Original-PAK-fingerprint-MD5': pakHash.hexdigest(),
-        'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0β1 (' + script_revision + ')'
+        'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0 (' + script_revision + ')'
     }
     
     startProgress("Converting PAK->PO")
@@ -302,7 +318,7 @@ def CreatePatch(originalPo, editedPo, patchPo):
     'Content-Type': 'text/plain; charset=utf-8',
     'Content-Transfer-Encoding': '8bit',
      #'Original-PAK-fingerprint-MD5': pakHash.hexdigest(),
-    'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0β1 (' + script_revision + ')'
+    'X-Generator': 'Vivaldi Translation Team PAK-PO converter 1.0 (' + script_revision + ')'
   }
 
   for original in po:
@@ -329,8 +345,8 @@ def ApplyPatch(originalPo, patchPo):
   
   startProgress("Applying patch")
 
-  with open("patch.log", "a") as logfile:
-    logfile.write("\n[" + strftime("%Y-%m-%d %H:%M+0000", gmtime()) + "]\n")
+  with open("patch.log", "a", encoding="utf-8") as logfile:
+    logfile.write("\n[" + strftime("%Y-%m-%d %H:%M+0000", gmtime()) + "]\t" + originalPo + "\n")
     for patchEntry in poPatch:
       originalEntry = poOrig.find(patchEntry.msgid)
       if originalEntry:
