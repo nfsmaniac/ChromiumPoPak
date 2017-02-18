@@ -15,13 +15,18 @@ def main():
   in_dir      = sys.argv[1]
   out_dir     = sys.argv[2]
   
+  unpack(in_dir, out_dir)
+    
+def unpack(in_dir, out_dir):
   backup_done = False  
   en_PAK = os.path.join(in_dir, "en-US.pak")
 
   if os.path.isfile(en_PAK) == True:
     files_count = len(fnmatch.filter(os.listdir(in_dir), '*.pak'))
     current_file = 0  
-    for file in os.listdir(in_dir):
+    for file in os.listdir(in_dir):                 # Cleanup
+      if ".bak" in file:
+        os.remove(file)
       if file.endswith(".pak"):
         if not os.path.exists(out_dir):
           os.makedirs(out_dir)
